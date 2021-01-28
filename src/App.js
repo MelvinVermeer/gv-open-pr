@@ -13,40 +13,38 @@ const ignoreRepos = ["gv-core-components"];
 
 function App() {
   const [data, setData] = useState();
-  const [perTeam, setPerTeam] = useState([]);
 
   useEffect(() => {
     async function anyNameFunction() {
-      const x = await getData(teams, ignoreRepos);
-
-      // const z = await groupByRepo(teams[0], ignoreRepos);
-
-      const y = await Promise.all(
-        teams.map((q) => groupByRepo(q, ignoreRepos))
+      const openPrsPerTeam = await Promise.all(
+        teams.map((team) => groupByRepo(team, ignoreRepos))
       );
-      const yy = teams.map((x, i) => ({ name: x, prs: [
-        {
-          data: Object.entries(y[i]),
-        },
-      ] }));
 
-      // console.table(x);
+      const openPrsPerTeamObject = Object.fromEntries(
+        teams.map((team, i) => [team, openPrsPerTeam[i]])
+      )
 
-      console.log(y);
-      setPerTeam(yy);
+      const data = openPrsPerTeam
+        .flatMap((prPerTeam) => Object.keys(prPerTeam))
+        .map((repo) => ({
+          label: repo,
+          data: teams.map((team) => [team, openPrsPerTeamObject[team][repo] ?? 0]),
+        }));
 
-      setData([
-        {
-          data: Object.entries(x),
-        },
-      ]);
+      console.log({
+        openPrsPerTeam,
+        openPrsPerTeamObject,
+        d: data,
+      });
+
+      setData(data);
     }
     anyNameFunction();
   }, []);
 
   const axes = [
-    { primary: true, type: "ordinal", position: "bottom"},
-    { type: "linear", position: "left" },
+    { primary: true, type: "ordinal", position: "bottom" },
+    { type: "linear", position: "left", stacked: true },
   ];
 
   return (
@@ -61,30 +59,6 @@ function App() {
           <Chart tooltip data={data} axes={axes} series={{ type: "bar" }} />
         )}
       </div>
-
-      <hr />
-
-      {perTeam.length &&
-        perTeam.map((team) => (
-          <div key={team}>
-            <h2>{team.name}</h2>
-            <div
-              style={{
-                width: "400px",
-                height: "300px",
-              }}
-            >
-              {data && (
-                <Chart
-                  tooltip
-                  data={team.prs}
-                  axes={axes}
-                  series={{ type: "bar" }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
     </div>
   );
 }
