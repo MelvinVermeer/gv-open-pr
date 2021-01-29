@@ -18,12 +18,10 @@ function convertToChartDataSet(result) {
     ),
   ];
 
-  const data = repos.map((repo) => ({
+  return repos.map((repo) => ({
     label: repo,
     data: teams.map((team) => [team, result[team][repo] ?? 0]),
   }));
-
-  return data;
 }
 
 function App() {
@@ -32,7 +30,7 @@ function App() {
   useEffect(() => {
     async function anyNameFunction() {
       const result = await getOpenPrsPerTeam(teams, ignoreRepos);
-      console.table(result)
+      console.log(result)
       setData(convertToChartDataSet(result));
     }
     anyNameFunction();
@@ -40,7 +38,7 @@ function App() {
 
   const axes = [
     { primary: true, type: "ordinal", position: "bottom" },
-    { type: "linear", position: "left", stacked: false },
+    { type: "linear", position: "left", stacked: true },
   ];
 
   return (
