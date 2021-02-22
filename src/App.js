@@ -11,6 +11,10 @@ const teams = [
 
 const ignoreRepos = ["gv-core-components"];
 
+const handleOnClick = (e) => {
+  window.open(`https://github.com/GrandVisionHQ/${e.seriesLabel}/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse`)
+}
+
 function convertToChartDataSet(result) {
   const repos = [
     ...new Set(
@@ -50,7 +54,7 @@ function App() {
         }}
       >
         {data && (
-          <Chart tooltip data={data} axes={axes} series={{ type: "bar" }} />
+          <Chart tooltip data={data} axes={axes} series={{ type: "bar" }} onClick={handleOnClick} />
         )}
       </div>
     </div>
