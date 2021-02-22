@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Chart } from "react-charts";
-import { getData, groupByRepo } from "./GitHub";
+import { getOpenPrsPerTeam } from "./GitHub";
 
 const teams = [
   "Browse to Order",
@@ -11,42 +11,38 @@ const teams = [
 
 const ignoreRepos = ["gv-core-components"];
 
+const handleOnClick = (e) => {
+  window.open(`https://github.com/GrandVisionHQ/${e.seriesLabel}/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse`)
+}
+
+function convertToChartDataSet(result) {
+  const repos = [
+    ...new Set(
+      Object.values(result).flatMap((prPerTeam) => Object.keys(prPerTeam))
+    ),
+  ];
+
+  return repos.map((repo) => ({
+    label: repo,
+    data: teams.map((team) => [team, result[team][repo] ?? 0]),
+  }));
+}
+
 function App() {
   const [data, setData] = useState();
-  const [perTeam, setPerTeam] = useState([]);
 
   useEffect(() => {
     async function anyNameFunction() {
-      const x = await getData(teams, ignoreRepos);
-
-      // const z = await groupByRepo(teams[0], ignoreRepos);
-
-      const y = await Promise.all(
-        teams.map((q) => groupByRepo(q, ignoreRepos))
-      );
-      const yy = teams.map((x, i) => ({ name: x, prs: [
-        {
-          data: Object.entries(y[i]),
-        },
-      ] }));
-
-      // console.table(x);
-
-      console.log(y);
-      setPerTeam(yy);
-
-      setData([
-        {
-          data: Object.entries(x),
-        },
-      ]);
+      const result = await getOpenPrsPerTeam(teams, ignoreRepos);
+      console.log(result)
+      setData(convertToChartDataSet(result));
     }
     anyNameFunction();
   }, []);
 
   const axes = [
-    { primary: true, type: "ordinal", position: "bottom"},
-    { type: "linear", position: "left" },
+    { primary: true, type: "ordinal", position: "bottom" },
+    { type: "linear", position: "left", stacked: true },
   ];
 
   return (
@@ -58,33 +54,9 @@ function App() {
         }}
       >
         {data && (
-          <Chart tooltip data={data} axes={axes} series={{ type: "bar" }} />
+          <Chart tooltip data={data} axes={axes} series={{ type: "bar" }} onClick={handleOnClick} />
         )}
       </div>
-
-      <hr />
-
-      {perTeam.length &&
-        perTeam.map((team) => (
-          <div key={team}>
-            <h2>{team.name}</h2>
-            <div
-              style={{
-                width: "400px",
-                height: "300px",
-              }}
-            >
-              {data && (
-                <Chart
-                  tooltip
-                  data={team.prs}
-                  axes={axes}
-                  series={{ type: "bar" }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
     </div>
   );
 }
